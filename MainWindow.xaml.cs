@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -64,7 +65,15 @@ namespace BoomBeachStats
         {
             get
             {
-                string d = @"C:\Src\BoomBeach\Data\";
+                string d = ConfigurationManager.AppSettings["DataDir"];
+                if(d == null)
+                {
+                    d = Environment.CurrentDirectory + @"\BoomBeachData\";
+                    var configFile = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+                    ConfigurationManager.AppSettings["DataDir"] = d;
+                    configFile.AppSettings.Settings.Add("DataDir", d);
+                    configFile.Save();
+                }
                 return d;
             }
         }
@@ -103,7 +112,7 @@ namespace BoomBeachStats
             using (var tw = new StreamReader(path))
             {
                 string s;
-                while (!String.IsNullOrWhiteSpace(s = tw.ReadLine().Trim()))
+                while (!String.IsNullOrWhiteSpace(s = tw.ReadLine()))
                 {
                     results.Add(s.Trim());
                 }

@@ -18,8 +18,9 @@
             <TabItem Header="Who didn't attack">
                 <DockPanel>
                     <DockPanel DockPanel.Dock="Top">
-                        <TextBlock Text="{Binding DaysToGoBackSlider.Value, ElementName=uc}" MinWidth="40"></TextBlock>
-                        <Slider x:Name="DaysToGoBackSlider" Orientation="Horizontal" Minimum="1" Maximum="20" Value="3" DockPanel.Dock="Top"></Slider>
+                        <TextBlock VerticalAlignment="Center">Days to go back:</TextBlock>
+                        <Label Content="{Binding Value, ElementName=DaysToGoBackSlider, StringFormat=\{0:D\}}"  MinWidth="40" HorizontalContentAlignment="Right" VerticalAlignment="Center"></Label>
+                        <Slider x:Name="DaysToGoBackSlider" Orientation="Horizontal" Minimum="1" Maximum="20" Value="3"  DockPanel.Dock="Top"></Slider>
                     </DockPanel>
                     <Button DockPanel.Dock="Bottom" x:Name="CalculateNonAttackersButton" Click="CalculateNonAttackers_Click">Figure it out</Button>
                     <TextBox x:Name="WhoDidntAttack" MinWidth="100" AcceptsReturn="True"  ></TextBox>

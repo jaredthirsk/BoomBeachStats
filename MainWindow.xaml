@@ -12,6 +12,11 @@
                 <DockPanel>
                     <Calendar x:Name="Calendar" DockPanel.Dock="Left"></Calendar>
                     <Button DockPanel.Dock="Bottom" Click="Save_Click">Save</Button>
+                    <DockPanel DockPanel.Dock="Bottom">
+                        <Button x:Name="ImportButton" DockPanel.Dock="Right" Click="ImportButton_Click">Import</Button>
+                        <TextBox x:Name="ImportTextBox" DockPanel.Dock="Left" Visibility="Collapsed"></TextBox>
+                        <TextBox x:Name="ImportNumberTextBox" Text="{Binding NextImage, ElementName=uc}"  DockPanel.Dock="Left"></TextBox>
+                    </DockPanel>
                     <TextBox x:Name="TxtAttackers" MinWidth="100" AcceptsReturn="True"  ></TextBox>
                 </DockPanel>
             </TabItem>
@@ -23,6 +28,7 @@
                         <Slider x:Name="DaysToGoBackSlider" Orientation="Horizontal" Minimum="1" Maximum="20" Value="3"  DockPanel.Dock="Top"></Slider>
                     </DockPanel>
                     <Button DockPanel.Dock="Bottom" x:Name="CalculateNonAttackersButton" Click="CalculateNonAttackers_Click">Figure it out</Button>
+                    
                     <TextBox x:Name="WhoDidntAttack" MinWidth="100" AcceptsReturn="True"  ></TextBox>
                 </DockPanel>
             </TabItem>

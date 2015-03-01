@@ -1,5 +1,7 @@
-﻿using System;
+﻿using BoomBeachStats.OCR;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Configuration;
 using System.IO;
 using System.Linq;
@@ -20,7 +22,7 @@ namespace BoomBeachStats
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow : Window, INotifyPropertyChanged
     {
         private void CreateDirectoryIfNeeded(string dir)
         {
@@ -29,12 +31,18 @@ namespace BoomBeachStats
                 Directory.CreateDirectory(dir);
             }
         }
+
+
+        
+
         public MainWindow()
         {
             CreateDirectoryIfNeeded(DataDir);
             CreateDirectoryIfNeeded(RosterDir);
 
             InitializeComponent();
+            SetImportFileName();
+
 
             DateTime date = DateTime.Now;
             for (int i = 60; i > 0; i--)
@@ -52,6 +60,7 @@ namespace BoomBeachStats
                         }
                     }
                     TxtRoster.Text = sb.ToString();
+                    break;
                 }
                 date = date - TimeSpan.FromDays(1);
             }
@@ -66,7 +75,7 @@ namespace BoomBeachStats
             get
             {
                 string d = ConfigurationManager.AppSettings["DataDir"];
-                if(d == null)
+                if (d == null)
                 {
                     d = Environment.CurrentDirectory + @"\BoomBeachData\";
                     var configFile = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
@@ -200,13 +209,13 @@ namespace BoomBeachStats
 
             WhoDidntAttack.Text = "";
             var sb = new StringBuilder();
-            foreach(var kvp in result.OrderBy(x=>-x.Value.Count))
+            foreach (var kvp in result.OrderBy(x => -x.Value.Count))
             {
                 if (string.IsNullOrWhiteSpace(kvp.Key.Trim())) continue;
                 sb.Append(kvp.Value.Count);
                 sb.Append(" ");
                 sb.Append(kvp.Key);
-                foreach(var date in kvp.Value)
+                foreach (var date in kvp.Value)
                 {
                     sb.Append(" ");
                     sb.Append(date.ToString("MMM-dd"));
@@ -223,6 +232,7 @@ namespace BoomBeachStats
             HashSet<string> attackers;
 
             Dictionary<string, List<DateTime>> nonAttackers = new Dictionary<string, List<DateTime>>();
+            bool changedRoster = false;
 
             for (int i = (int)DaysToGoBackSlider.Value; i > 0; i--, date -= TimeSpan.FromDays(1))
             {
@@ -232,7 +242,7 @@ namespace BoomBeachStats
                 attackers = new HashSet<string>(list);
 
                 opCount++;
-                foreach (var member in Roster)
+                foreach (var member in Roster.ToArray())
                 {
                     if (!attackers.Contains(member))
                     {
@@ -249,8 +259,89 @@ namespace BoomBeachStats
                         missedAttacks.Add(date);
                     }
                 }
+
+                foreach(var attacker in list)
+                {
+                    if (!Roster.Contains(attacker))
+                    {
+                        if (MessageBox.Show("Add " + attacker + " to roster?", "", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+                        {
+                            Roster.Add(attacker);
+                            changedRoster = true;
+                        }
+                    }
+                }
+            }
+            if(changedRoster)
+            {
+                TxtRoster.Text = Roster.Aggregate((x, y) => x + Environment.NewLine + y);
             }
             return nonAttackers;
         }
+
+        #region Import
+
+        #region NextImage
+
+        public int NextImage
+        {
+            get { return nextImage; }
+            set
+            {
+                if (nextImage == value) return;
+                nextImage = value;
+                SetImportFileName();
+                OnPropertyChanged("NextImage");
+            }
+        } private int nextImage = 1655;
+
+        #endregion
+
+
+        public void SetImportFileName()
+        {
+            ImportTextBox.Text = "IMG_" + NextImage + ".png";
+        }
+
+        public int MaxAuto = 5;
+        private void ImportButton_Click(object sender, RoutedEventArgs e)
+        {
+            for (int auto = MaxAuto; auto > 0; auto--)
+            {
+                var path = Scanner.Instance.ImageDir + ImportTextBox.Text;
+                if (!File.Exists(path)) { break; }
+
+                var list = Scanner.Instance.ScanForOpAttacks(path);
+                foreach (var item in list.Values)
+                {
+                    if (!String.IsNullOrWhiteSpace(TxtAttackers.Text))
+                    {
+                        TxtAttackers.Text += Environment.NewLine;
+                    }
+                    TxtAttackers.Text += item.Name;
+                }
+                NextImage++;
+                SetImportFileName();
+            }
+        }
+
+        #endregion
+
+
+        #region Misc
+
+        #region INotifyPropertyChanged Implementation
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        private void OnPropertyChanged(string propertyName)
+        {
+            var ev = PropertyChanged;
+            if (ev != null) ev(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        #endregion
+
+        #endregion
     }
 }
